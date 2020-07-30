@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:telegram_ui/widgets/widget.dart';
 
 class SignIn extends StatefulWidget {
+  final Function toggle;
+  SignIn(this.toggle);
+
   @override
   _SignInState createState() => _SignInState();
 }
@@ -34,6 +37,7 @@ class _SignInState extends State<SignIn> {
               ),
             ),
             TextField(
+              obscureText: true,
               decoration: InputDecoration(
                 hintText: 'Password'
               ),
@@ -66,10 +70,17 @@ class _SignInState extends State<SignIn> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   Text('Don`t have account?'),
-                  Text('Register now', style: TextStyle(
-
-                      decoration: TextDecoration.underline
-                  ),)
+                  GestureDetector(
+                    onTap: () {
+                      widget.toggle();
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      child: Text('Register now', style: TextStyle(
+                          decoration: TextDecoration.underline
+                      ),),
+                    ),
+                  )
                 ],
               ),
             )

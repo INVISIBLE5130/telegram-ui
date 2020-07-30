@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:telegram_ui/services/auth.dart';
+import 'package:telegram_ui/views/chatRooms.dart';
 import 'package:telegram_ui/widgets/widget.dart';
 
 class SignUp extends StatefulWidget {
+  final Function toggle;
+  SignUp(this.toggle);
+
   @override
   _SignUpState createState() => _SignUpState();
 }
@@ -27,7 +31,11 @@ class _SignUpState extends State<SignUp> {
           emailTextController.text,
           passwordTextController.text
       ).then((val){
-        print("$val");
+//        print("${val.uid}");
+
+        Navigator.pushReplacement(context, MaterialPageRoute(
+          builder: (context) => ChatRoom()
+        ));
       });
     }
   }
@@ -119,10 +127,17 @@ class _SignUpState extends State<SignUp> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   Text('Already have account?'),
-                  Text('Login now', style: TextStyle(
-
-                      decoration: TextDecoration.underline
-                  ),)
+                  GestureDetector(
+                    onTap: () {
+                      widget.toggle();
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      child: Text('Login now', style: TextStyle(
+                          decoration: TextDecoration.underline
+                      ),),
+                    ),
+                  )
                 ],
               ),
             )
