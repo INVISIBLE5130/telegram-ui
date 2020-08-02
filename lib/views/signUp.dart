@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:telegram_ui/helper/helperfunctions.dart';
 import 'package:telegram_ui/services/auth.dart';
+import 'package:telegram_ui/services/database.dart';
 import 'package:telegram_ui/views/chatRooms.dart';
 import 'package:telegram_ui/widgets/widget.dart';
 
@@ -12,30 +14,41 @@ class SignUp extends StatefulWidget {
 }
 
 class _SignUpState extends State<SignUp> {
+  TextEditingController emailEditingController = new TextEditingController();
+  TextEditingController passwordEditingController = new TextEditingController();
+  TextEditingController usernameEditingController =
+  new TextEditingController();
+
+  AuthMethods authService = new AuthMethods();
+  DatabaseMethods databaseMethods = new DatabaseMethods();
+
   final formKey = GlobalKey<FormState>();
   bool isLoading = false;
 
-  AuthMethods authMethods = new AuthMethods();
-
-  TextEditingController userNameTextController = new TextEditingController();
-  TextEditingController emailTextController = new TextEditingController();
-  TextEditingController passwordTextController = new TextEditingController();
-
-  signMeUp() {
-    if(formKey.currentState.validate()) {
+  singUp() async {
+    if (formKey.currentState.validate()) {
       setState(() {
         isLoading = true;
       });
 
-      authMethods.signUpWithEmailAndPassword(
-          emailTextController.text,
-          passwordTextController.text
-      ).then((val){
-//        print("${val.uid}");
+      await authService.signUpWithEmailAndPassword(emailEditingController.text,
+          passwordEditingController.text).then((result) {
+        if (result != null) {
+          Map<String, String> userDataMap = {
+            "userName": usernameEditingController.text,
+            "userEmail": emailEditingController.text
+          };
 
-        Navigator.pushReplacement(context, MaterialPageRoute(
-          builder: (context) => ChatRoom()
-        ));
+          databaseMethods.addUserInfo(userDataMap);
+
+          HelperFunctions.saveUserLoggedInSharedPreference(true);
+          HelperFunctions.saveUserNameSharedPreference(usernameEditingController.text);
+          HelperFunctions.saveUserEmailSharedPreference(emailEditingController.text);
+
+          Navigator.pushReplacement(context, MaterialPageRoute(
+              builder: (context) => ChatRoom()
+          ));
+        }
       });
     }
   }
@@ -71,9 +84,11 @@ class _SignUpState extends State<SignUp> {
                 children: [
                   TextFormField(
                     validator: (val) {
-                      return val.isEmpty || val.length < 2 ? 'Please provide a valid username' : null;
+                      return val.isEmpty || val.length < 2
+                          ? 'Please provide a valid username'
+                          : null;
                     },
-                    controller: userNameTextController,
+                    controller: usernameEditingController,
                     decoration: InputDecoration(
                         hintText: 'Username'
                     ),
@@ -81,10 +96,10 @@ class _SignUpState extends State<SignUp> {
                   TextFormField(
                     validator: (val) {
                       return RegExp(
-                        r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+"
+                          r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+"
                       ).hasMatch(val) ? null : 'Please provide a valid email';
                     },
-                    controller: emailTextController,
+                    controller: emailEditingController,
                     decoration: InputDecoration(
                         hintText: 'Email'
                     ),
@@ -92,9 +107,11 @@ class _SignUpState extends State<SignUp> {
                   TextFormField(
                     obscureText: true,
                     validator: (val) {
-                      return val.length > 6 ? null : 'Please provide password more than 6 characters';
+                      return val.length > 6
+                          ? null
+                          : 'Please provide password more than 6 characters';
                     },
-                    controller: passwordTextController,
+                    controller: passwordEditingController,
                     decoration: InputDecoration(
                         hintText: 'Password'
                     ),
@@ -103,12 +120,15 @@ class _SignUpState extends State<SignUp> {
               ),
             ),
             GestureDetector(
-              onTap: (){
-                signMeUp();
+              onTap: () {
+                singUp();
               },
               child: Container(
                 margin: EdgeInsets.only(top: 32, bottom: 16),
-                width: MediaQuery.of(context).size.width,
+                width: MediaQuery
+                    .of(context)
+                    .size
+                    .width,
                 padding: EdgeInsets.symmetric(vertical: 16),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(

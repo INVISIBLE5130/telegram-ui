@@ -1,54 +1,52 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:telegram_ui/model/user.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthMethods {
   final FirebaseAuth auth = FirebaseAuth.instance;
 
-  User userFromFirebaseUser(FirebaseUser user){
+  User _userFromFirebaseUser(FirebaseUser user) {
     return user != null ? User(userId: user.uid) : null;
   }
 
   Future signInWithEmailAndPassword(String email, String password) async {
     try {
       AuthResult result = await auth.signInWithEmailAndPassword(
-          email: email,
-          password: password
-      );
-
-      FirebaseUser firebaseUser = result.user;
-      return userFromFirebaseUser(firebaseUser);
-    } catch(e) {
+          email: email, password: password);
+      FirebaseUser user = result.user;
+      return _userFromFirebaseUser(user);
+    } catch (e) {
       print(e.toString());
+      return null;
     }
   }
 
   Future signUpWithEmailAndPassword(String email, String password) async {
     try {
       AuthResult result = await auth.createUserWithEmailAndPassword(
-          email: email,
-          password: password
-      );
-
-      FirebaseUser firebaseUser = result.user;
-      return userFromFirebaseUser(firebaseUser);
-    } catch(e) {
+          email: email, password: password);
+      FirebaseUser user = result.user;
+      return _userFromFirebaseUser(user);
+    } catch (e) {
       print(e.toString());
+      return null;
     }
   }
 
-  Future resetPassword(String email) async {
+  Future resetPass(String email) async {
     try {
       return await auth.sendPasswordResetEmail(email: email);
-    } catch(e) {
+    } catch (e) {
       print(e.toString());
+      return null;
     }
   }
 
   Future signOut() async {
     try {
       return await auth.signOut();
-    } catch(e) {
+    } catch (e) {
       print(e.toString());
+      return null;
     }
   }
 }
