@@ -41,13 +41,12 @@ class _ChatRoomState extends State<ChatRoom> {
         itemCount: searchResultSnapshot.documents.length,
         itemBuilder: (context, index){
           return userTile(
-            searchResultSnapshot.documents[index].data["userName"],
-            searchResultSnapshot.documents[index].data["userEmail"],
+            searchResultSnapshot.documents[index].data["name"],
+            searchResultSnapshot.documents[index].data["email"],
           );
         }) : Container();
   }
 
-  /// 1.create a chatroom, send user to the chatroom, other userdetails
 //  sendMessage(String userName){
 //    List<String> users = [Constants.myName,userName];
 //
@@ -67,7 +66,7 @@ class _ChatRoomState extends State<ChatRoom> {
 //    ));
 //  }
 
-  Widget userTile(String userName,String userEmail){
+  Widget userTile(String userName, String userEmail){
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Row(
@@ -78,14 +77,14 @@ class _ChatRoomState extends State<ChatRoom> {
               Text(
                 userName,
                 style: TextStyle(
-                    color: Colors.white,
+                    color: Colors.black,
                     fontSize: 16
                 ),
               ),
               Text(
                 userEmail,
                 style: TextStyle(
-                    color: Colors.white,
+                    color: Colors.black,
                     fontSize: 16
                 ),
               )
@@ -114,7 +113,6 @@ class _ChatRoomState extends State<ChatRoom> {
     );
   }
 
-
   getChatRoomId(String a, String b) {
     if (a.substring(0, 1).codeUnitAt(0) > b.substring(0, 1).codeUnitAt(0)) {
       return "$b\_$a";
@@ -125,6 +123,7 @@ class _ChatRoomState extends State<ChatRoom> {
 
   @override
   void initState() {
+    initiateSearch();
     super.initState();
   }
 
@@ -165,37 +164,46 @@ class _ChatRoomState extends State<ChatRoom> {
           ),
         ],
       ),
-      body: Container(
+      body: isLoading ? Container(
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      ) : Container(
         color: Colors.white,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Theme(
-            data: Theme.of(context).copyWith(splashColor: Colors.transparent),
-            child: TextField(
-              autofocus: false,
-              style: TextStyle(fontSize: 18.0),
-              decoration: InputDecoration(
-                contentPadding: const EdgeInsets.only(top: 13.0),
-                prefixIcon: GestureDetector(
-                    onTap: (){
-                      initiateSearch();
-                    },
-                    child: Icon(Icons.search)
-                ),
-                filled: true,
-                fillColor: Colors.black.withOpacity(0.05),
-                hintText: 'Search for messages or users',
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white),
-                  borderRadius: BorderRadius.circular(25.7),
-                ),
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white),
-                  borderRadius: BorderRadius.circular(25.7),
+        child: Column(
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Theme(
+                data: Theme.of(context).copyWith(splashColor: Colors.transparent),
+                child: TextField(
+                  autofocus: false,
+                  style: TextStyle(fontSize: 18.0),
+                  decoration: InputDecoration(
+                    contentPadding: const EdgeInsets.only(top: 13.0),
+                    prefixIcon: GestureDetector(
+                        onTap: (){
+                          initiateSearch();
+                        },
+                        child: Icon(Icons.search)
+                    ),
+                    filled: true,
+                    fillColor: Colors.black.withOpacity(0.05),
+                    hintText: 'Search for messages or users',
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white),
+                      borderRadius: BorderRadius.circular(25.7),
+                    ),
+                    enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: Colors.white),
+                      borderRadius: BorderRadius.circular(25.7),
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
+            userList(),
+          ],
         ),
       ),
     );
