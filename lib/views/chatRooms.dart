@@ -1,8 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:telegram_ui/helper/authenticate.dart';
+import 'package:telegram_ui/helper/constants.dart';
+import 'package:telegram_ui/helper/helperfunctions.dart';
 import 'package:telegram_ui/services/auth.dart';
 import 'package:telegram_ui/services/database.dart';
+import 'package:telegram_ui/views/search.dart';
+
+import 'chat.dart';
 
 class ChatRoom extends StatefulWidget {
   @override
@@ -10,199 +14,125 @@ class ChatRoom extends StatefulWidget {
 }
 
 class _ChatRoomState extends State<ChatRoom> {
-  AuthMethods authMethods = new AuthMethods();
-  DatabaseMethods databaseMethods = new DatabaseMethods();
-  TextEditingController searchEditingController = new TextEditingController();
-  QuerySnapshot searchResultSnapshot;
+  Stream chatRooms;
 
-  bool isLoading = false;
-  bool haveUserSearched = false;
-
-  initiateSearch() async {
-    if(searchEditingController.text.isNotEmpty){
-      setState(() {
-        isLoading = true;
-      });
-      await databaseMethods.searchByName(searchEditingController.text)
-          .then((snapshot){
-        searchResultSnapshot = snapshot;
-        print("$searchResultSnapshot");
-        setState(() {
-          isLoading = false;
-          haveUserSearched = true;
-        });
-      });
-    }
-  }
-
-  Widget userList(){
-    return haveUserSearched ? ListView.builder(
-        shrinkWrap: true,
-        itemCount: searchResultSnapshot.documents.length,
-        itemBuilder: (context, index){
-          return userTile(
-            searchResultSnapshot.documents[index].data["name"],
-            searchResultSnapshot.documents[index].data["email"],
-          );
-        }) : Container();
-  }
-
-//  sendMessage(String userName){
-//    List<String> users = [Constants.myName,userName];
-//
-//    String chatRoomId = getChatRoomId(Constants.myName,userName);
-//
-//    Map<String, dynamic> chatRoom = {
-//      "users": users,
-//      "chatRoomId" : chatRoomId,
-//    };
-//
-//    databaseMethods.addChatRoom(chatRoom, chatRoomId);
-//
-//    Navigator.push(context, MaterialPageRoute(
-//        builder: (context) => Chat(
-//          chatRoomId: chatRoomId,
-//        )
-//    ));
-//  }
-
-  Widget userTile(String userName, String userEmail){
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Row(
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                userName,
-                style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 16
-                ),
-              ),
-              Text(
-                userEmail,
-                style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 16
-                ),
-              )
-            ],
-          ),
-          Spacer(),
-          GestureDetector(
-//            onTap: (){
-//              sendMessage(userName);
-//            },
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 12,vertical: 8),
-              decoration: BoxDecoration(
-                  color: Colors.blue,
-                  borderRadius: BorderRadius.circular(24)
-              ),
-              child: Text("Message",
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16
-                ),),
-            ),
-          )
-        ],
-      ),
+  Widget chatRoomsList() {
+    return StreamBuilder(
+      stream: chatRooms,
+      builder: (context, snapshot) {
+        return snapshot.hasData
+            ? ListView.builder(
+            itemCount: snapshot.data.documents.length,
+            shrinkWrap: true,
+            itemBuilder: (context, index) {
+              return ChatRoomsTile(
+                userName: snapshot.data.documents[index].data['chatRoomId']
+                    .toString()
+                    .replaceAll("_", "")
+                    .replaceAll(Constants.myName, ""),
+                chatRoomId: snapshot.data.documents[index].data["chatRoomId"],
+              );
+            })
+            : Container();
+      },
     );
-  }
-
-  getChatRoomId(String a, String b) {
-    if (a.substring(0, 1).codeUnitAt(0) > b.substring(0, 1).codeUnitAt(0)) {
-      return "$b\_$a";
-    } else {
-      return "$a\_$b";
-    }
   }
 
   @override
   void initState() {
-    initiateSearch();
+    getUserInfogetChats();
     super.initState();
+  }
+
+  getUserInfogetChats() async {
+    Constants.myName = await HelperFunctions.getUserNameSharedPreference();
+    DatabaseMethods().getUserChats(Constants.myName).then((snapshots) {
+      setState(() {
+        chatRooms = snapshots;
+        print(
+            "we got the data + ${chatRooms.toString()} this is name  ${Constants.myName}");
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
         leading: GestureDetector(
           onTap: () {
-            authMethods.signOut();
-            Navigator.pushReplacement(context, MaterialPageRoute(
-              builder: (context) => Authenticate(),
-            ));
+            AuthMethods().signOut();
+            Navigator.pushReplacement(context,
+                MaterialPageRoute(builder: (context) => Authenticate()));
           },
-          child: Center(
-              child: Icon(Icons.arrow_back_ios, color: Colors.blue)),
+
+          child: Icon(Icons.arrow_back_ios)
         ),
         title: Padding(
-          padding: const EdgeInsets.only(right: 20),
-          child: Center(child: Text('Chats', style: TextStyle(
-            color: Colors.black
-          ),)),
+          padding: const EdgeInsets.only(right: 50),
+          child: Center(child: Text('Telegram')),
         ),
-        actions: <Widget>[
-          GestureDetector(
-//            onTap: () {
-//              authMethods.signOut();
-//              Navigator.pushReplacement(context, MaterialPageRoute(
-//                builder: (context) => Authenticate(),
-//              ));
-//            },
-            child: Container(
-              padding: EdgeInsets.only(right: 16),
-              child: Icon(Icons.edit, color: Colors.blue),
-            ),
-          ),
-        ],
+        elevation: 0.0,
       ),
-      body: isLoading ? Container(
-        child: Center(
-          child: CircularProgressIndicator(),
-        ),
-      ) : Container(
-        color: Colors.white,
-        child: Column(
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Theme(
-                data: Theme.of(context).copyWith(splashColor: Colors.transparent),
-                child: TextField(
-                  autofocus: false,
-                  style: TextStyle(fontSize: 18.0),
-                  decoration: InputDecoration(
-                    contentPadding: const EdgeInsets.only(top: 13.0),
-                    prefixIcon: GestureDetector(
-                        onTap: (){
-                          initiateSearch();
-                        },
-                        child: Icon(Icons.search)
-                    ),
-                    filled: true,
-                    fillColor: Colors.black.withOpacity(0.05),
-                    hintText: 'Search for messages or users',
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white),
-                      borderRadius: BorderRadius.circular(25.7),
-                    ),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white),
-                      borderRadius: BorderRadius.circular(25.7),
-                    ),
-                  ),
-                ),
-              ),
+      body: Container(
+        child: chatRoomsList(),
+      ),
+      floatingActionButton: FloatingActionButton(
+        child: Icon(Icons.search),
+        onPressed: () {
+          Navigator.push(
+              context, MaterialPageRoute(builder: (context) => Search()));
+        },
+      ),
+    );
+  }
+}
+
+class ChatRoomsTile extends StatelessWidget {
+  final String userName;
+  final String chatRoomId;
+
+  ChatRoomsTile({this.userName,@required this.chatRoomId});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: (){
+        Navigator.push(context, MaterialPageRoute(
+            builder: (context) => Chat(
+              chatRoomId: chatRoomId,
+            )
+        ));
+      },
+      child: Container(
+        color: Colors.black54,
+        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        child: Row(
+          children: [
+            Container(
+              height: 30,
+              width: 30,
+              decoration: BoxDecoration(
+                  color: Colors.blue,
+                  borderRadius: BorderRadius.circular(30)),
+              child: Text(userName.substring(0, 1),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                      fontFamily: 'OverpassRegular',
+                      fontWeight: FontWeight.w300)),
             ),
-            userList(),
+            SizedBox(
+              width: 12,
+            ),
+            Text(userName,
+                textAlign: TextAlign.start,
+                style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 16,
+                    fontFamily: 'OverpassRegular',
+                    fontWeight: FontWeight.w300))
           ],
         ),
       ),
